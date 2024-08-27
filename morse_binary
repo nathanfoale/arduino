@@ -1,0 +1,169 @@
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+
+// set up according to your arduino
+
+const int bitDuration = 500; 
+const int button1Pin = A1; 
+const int button2Pin = A4; 
+const int ledPin = 2; 
+const int buzzerPin = 3; 
+const int dotDuration = 200; 
+const int dashDuration = 600; 
+
+
+const int selectButton = A0; 
+int mode = 0; 
+
+// Binary Mode pitches
+const int pitch1 = 1000; 
+const int pitch0 = 500;  
+
+char currentLetter = 'A'; 
+
+void setup() {
+  lcd.begin(16, 2);
+  pinMode(button1Pin, INPUT_PULLUP);
+  pinMode(button2Pin, INPUT_PULLUP);
+  pinMode(selectButton, INPUT);
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+
+  lcd.print("Binary Code Trainer");
+  delay(2000);
+  lcd.clear();
+  lcd.print("Letter: ");
+  lcd.print(currentLetter);
+}
+
+void loop() {
+  
+  if (analogRead(selectButton) < 50) {
+    delay(200); 
+    mode = !mode; 
+    lcd.clear();
+    if (mode == 0) {
+      lcd.print("Mode: Binary");
+    } else {
+      lcd.print("Mode: Morse");
+    }
+    delay(1000); 
+    lcd.clear();
+    lcd.print("Letter: ");
+    lcd.print(currentLetter);
+  }
+
+  /
+  if (digitalRead(button1Pin) == LOW) {
+    delay(200); 
+    currentLetter++;
+    if (currentLetter > 'Z') {
+      currentLetter = 'A';
+    }
+    lcd.clear();
+    lcd.print("Letter: ");
+    lcd.print(currentLetter);
+    delay(500);
+  }
+
+  
+  if (digitalRead(button2Pin) == LOW) {
+    delay(200); 
+    if (mode == 0) {
+      playBinaryCode(currentLetter);
+    } else {
+      playMorseCode(currentLetter);
+    }
+  }
+}
+
+// Binary Code Function
+
+void playBinaryCode(char letter) {
+  int binaryCode = letter; 
+  lcd.clear();
+  lcd.print("Letter: ");
+  lcd.print(letter);
+  lcd.setCursor(0, 1);
+  lcd.print("Binary: ");
+  lcd.print(String(binaryCode, BIN)); 
+
+  for (int i = 7; i >= 0; i--) { 
+    int bit = (binaryCode >> i) & 1; /
+
+    if (bit == 1) {
+      digitalWrite(ledPin, HIGH);
+      tone(buzzerPin, pitch1, bitDuration); 
+    } else {
+      digitalWrite(ledPin, LOW);
+      tone(buzzerPin, pitch0, bitDuration); 
+    }
+    delay(bitDuration); // 
+  }
+
+  
+  digitalWrite(ledPin, LOW);
+  noTone(buzzerPin);
+  delay(1000); 
+}
+
+// Morse Code Function
+void playMorseCode(char letter) {
+  String morseCode = getMorseCode(letter);
+  
+ 
+  lcd.clear();
+  lcd.print("Letter: ");
+  lcd.print(letter);
+  lcd.setCursor(0, 1);
+  lcd.print("Morse: ");
+  lcd.print(morseCode);
+
+  for (int i = 0; i < morseCode.length(); i++) {
+    if (morseCode[i] == '.') {
+      digitalWrite(ledPin, HIGH);
+      tone(buzzerPin, pitch1);
+      delay(dotDuration); 
+    } else if (morseCode[i] == '-') {
+      digitalWrite(ledPin, HIGH);
+      tone(buzzerPin, pitch1);
+      delay(dashDuration); 
+    }
+    digitalWrite(ledPin, LOW);
+    noTone(buzzerPin);
+    delay(dotDuration); 
+  }
+  delay(1000); 
+
+String getMorseCode(char letter) {
+  switch (letter) {
+    case 'A': return ".-";
+    case 'B': return "-...";
+    case 'C': return "-.-.";
+    case 'D': return "-..";
+    case 'E': return ".";
+    case 'F': return "..-.";
+    case 'G': return "--.";
+    case 'H': return "....";
+    case 'I': return "..";
+    case 'J': return ".---";
+    case 'K': return "-.-";
+    case 'L': return ".-..";
+    case 'M': return "--";
+    case 'N': return "-.";
+    case 'O': return "---";
+    case 'P': return ".--.";
+    case 'Q': return "--.-";
+    case 'R': return ".-.";
+    case 'S': return "...";
+    case 'T': return "-";
+    case 'U': return "..-";
+    case 'V': return "...-";
+    case 'W': return ".--";
+    case 'X': return "-..-";
+    case 'Y': return "-.--";
+    case 'Z': return "--..";
+    default: return "";
+  }
+}
